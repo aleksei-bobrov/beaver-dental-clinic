@@ -1,0 +1,3 @@
+# The [job-queue] extra adds the scheduler we'll use later for appointment reminders
+python-telegram-bot[job-queue]>=22.8,<23
+python-dotenv>=1.0

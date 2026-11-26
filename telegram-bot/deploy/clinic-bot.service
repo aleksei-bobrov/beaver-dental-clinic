@@ -1,0 +1,29 @@
+# systemd service: keeps the bot running 24/7 and restarts it after a crash
+# or a server reboot.
+#
+# Install:  sudo cp deploy/clinic-bot.service /etc/systemd/system/
+#           sudo systemctl daemon-reload
+#           sudo systemctl enable --now clinic-bot
+# Logs:     sudo journalctl -u clinic-bot -f
+# Restart:  sudo systemctl restart clinic-bot   (after pulling new code)
+
+[Unit]
+Description=Clinic booking Telegram bot
+# Start only once the network is up, since the bot needs to reach Telegram
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Run as the unprivileged "bot" user, never as root
+User=bot
+WorkingDirectory=/home/bot/clinic-bot
+ExecStart=/home/bot/clinic-bot/.venv/bin/python bot.py
+# If the bot crashes, wait 5 seconds and start it again
+Restart=always
+RestartSec=5
+# Send Python output to the logs immediately instead of buffering it
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+# Start automatically when the server boots
+WantedBy=multi-user.target
