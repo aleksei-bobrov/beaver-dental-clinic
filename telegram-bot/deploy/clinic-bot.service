@@ -16,8 +16,8 @@ Wants=network-online.target
 [Service]
 # Run as the unprivileged "bot" user, never as root
 User=bot
-WorkingDirectory=/home/bot/clinic-bot
-ExecStart=/home/bot/clinic-bot/.venv/bin/python bot.py
+WorkingDirectory=/home/bot/beaver-dental-clinic/telegram-bot
+ExecStart=/home/bot/beaver-dental-clinic/telegram-bot/.venv/bin/python bot.py
 # If the bot crashes, wait 5 seconds and start it again
 Restart=always
 RestartSec=5
