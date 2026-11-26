@@ -1,0 +1,40 @@
+# Everything the bot knows about the clinic lives in this file.
+# To change prices or hours, edit this file (not the code), then restart the bot.
+# Swap in a salon's details and the same bot works for a beauty salon.
+
+name: Beaver Dental Clinic
+address: 12 Example Street, Example City
+phone: "+1 555 0100"
+
+# Where the clinic is. "Open now" is worked out in this time zone,
+# not the server's. Use a name from the tz database, e.g. Europe/Berlin.
+timezone: Europe/Helsinki
+
+# Shown in front of every price
+currency: "$"
+
+# 24-hour clock. Keep the quotes: without them YAML can misread times.
+# Write "closed" for days off.
+hours:
+  mon: "09:00-19:00"
+  tue: "09:00-19:00"
+  wed: "09:00-19:00"
+  thu: "09:00-19:00"
+  fri: "09:00-17:00"
+  sat: "10:00-15:00"
+  sun: closed
+
+# duration_min will be used for booking time slots in a later step
+services:
+  - name: Consultation
+    price: 30
+    duration_min: 30
+  - name: Professional cleaning
+    price: 80
+    duration_min: 60
+  - name: Filling
+    price: 120
+    duration_min: 60
+  - name: Teeth whitening
+    price: 250
+    duration_min: 90
