@@ -1,3 +1,14 @@
+# Needs Python 3.11 or newer (LangChain's requirement)
+
 # The [job-queue] extra adds the scheduler we'll use later for appointment reminders
 python-telegram-bot[job-queue]>=22.8,<23
 python-dotenv>=1.0
+# Reads clinic.yaml
+PyYAML>=6.0
+# Time zone data for Windows laptops (Linux servers already have it)
+tzdata
+# The agent framework. It installs LangGraph, which runs the agent loop.
+langchain>=1.5,<2
+# LangChain's OpenRouter integration (still in beta, so pinned more tightly).
+# For another provider, install its package instead, e.g. langchain-openai.
+langchain-openrouter>=0.3,<0.4
