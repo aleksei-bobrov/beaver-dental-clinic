@@ -21,6 +21,7 @@ from typing import Any
 from langchain.agents import AgentState, create_agent
 from langchain.agents.middleware import (
     ModelCallLimitMiddleware,
+    ModelFallbackMiddleware,
     ModelRequest,
     before_model,
     dynamic_prompt,
@@ -31,7 +32,7 @@ from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from langgraph.runtime import Runtime
 
 from clinic import Clinic
-from llm import make_model
+from llm import make_fallback_models, make_model
 from tools import make_tools
 
 log = logging.getLogger("clinic-bot.agent")
@@ -72,11 +73,18 @@ def trim(messages: list) -> list | None:
     return None  # one very long turn: leave it alone rather than cut it mid-way
 
 
+def _name(model: Any) -> str:
+    return getattr(model, "model_name", None) or getattr(model, "model", None) or "unknown"
+
+
 class Agent:
-    def __init__(self, clinic: Clinic, model: Any = None):
+    def __init__(self, clinic: Clinic, model: Any = None, fallbacks: list | None = None):
         self.clinic = clinic
         self.model = model if model is not None else make_model()
-        self.model_name = getattr(self.model, "model_name", None) or getattr(self.model, "model", "unknown")
+        fallbacks = fallbacks if fallbacks is not None else make_fallback_models()
+        self.model_name = _name(self.model)
+        if fallbacks:
+            self.model_name += " (backups: " + ", ".join(_name(m) for m in fallbacks) + ")"
 
         @dynamic_prompt
         def current_system_prompt(request: ModelRequest) -> str:
@@ -91,14 +99,20 @@ class Agent:
                 return None
             return {"messages": [RemoveMessage(id=REMOVE_ALL_MESSAGES), *kept]}
 
+        middleware = [
+            current_system_prompt,
+            trim_history,
+            ModelCallLimitMiddleware(run_limit=MAX_MODEL_CALLS, exit_behavior="end"),
+        ]
+        if fallbacks:
+            # When the main model fails (a busy free model, an outage), try the
+            # backups in order before giving up.
+            middleware.append(ModelFallbackMiddleware(*fallbacks))
+
         self._graph = create_agent(
             model=self.model,
             tools=make_tools(clinic),
-            middleware=[
-                current_system_prompt,
-                trim_history,
-                ModelCallLimitMiddleware(run_limit=MAX_MODEL_CALLS, exit_behavior="end"),
-            ],
+            middleware=middleware,
             # Memory per conversation ("thread"). It lives in RAM, so a restart
             # clears it. A database comes with the booking step.
             checkpointer=InMemorySaver(),

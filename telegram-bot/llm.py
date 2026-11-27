@@ -1,5 +1,5 @@
 """
-Creates the chat model. This is the only file that knows which provider we use.
+Creates the chat models. This is the only file that knows which provider we use.
 
 LangChain's init_chat_model gives every provider the same interface. To switch
 from OpenRouter to, say, OpenAI or a local Ollama model: change LLM_PROVIDER and
@@ -7,15 +7,18 @@ LLM_MODEL in .env, install that provider's package (e.g. langchain-openai), and
 put the API key in the variable that package reads (e.g. OPENAI_API_KEY).
 """
 
+from __future__ import annotations
+
 import os
 
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
 
 
-def make_model() -> BaseChatModel:
+def make_model(model: str | None = None) -> BaseChatModel:
+    """The main model from LLM_MODEL, or the model named in the argument."""
     provider = os.getenv("LLM_PROVIDER", "openrouter")
-    model = os.getenv("LLM_MODEL")
+    model = model or os.getenv("LLM_MODEL")
     if not model:
         raise SystemExit("LLM_MODEL is not set in .env. See .env.example.")
 
@@ -35,3 +38,11 @@ def make_model() -> BaseChatModel:
         max_retries=1,
         **extra,
     )
+
+
+def make_fallback_models() -> list[BaseChatModel]:
+    """Backup models from LLM_FALLBACK_MODELS (comma-separated, optional).
+    The agent tries them in order when the main model fails, for example when
+    a free model is busy."""
+    names = [name.strip() for name in os.getenv("LLM_FALLBACK_MODELS", "").split(",") if name.strip()]
+    return [make_model(name) for name in names]
